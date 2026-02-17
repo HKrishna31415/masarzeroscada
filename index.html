@@ -1,0 +1,170 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>MasarZero SCADA Fleet Manager</title>
+    
+    <!-- Preload Critical Resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" as="style">
+    <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style">
+    <link rel="preload" href="https://cdn.tailwindcss.com" as="script">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              scada: {
+                900: '#0f172a',
+                800: '#1e293b',
+                700: '#334155',
+                600: '#475569',
+                500: '#64748b',
+                // Updated to use CSS variable with fallback for opacity support
+                accent: 'rgb(var(--color-primary-rgb) / <alpha-value>)', 
+                success: '#22c55e',
+                warning: '#eab308',
+                danger: '#ef4444',
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'monospace'],
+            },
+            animation: {
+              'float': 'float 6s ease-in-out infinite',
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-10px)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root {
+        /* Default Brand Color (Teal) */
+        --color-primary: #14b8a6;
+        --color-primary-rgb: 20 184 166;
+      }
+
+      /* Smooth Scrolling & Mobile Polish */
+      html {
+        scroll-behavior: smooth;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      body {
+        /* Prevent pull-to-refresh on mobile to feel like native app */
+        overscroll-behavior-y: none;
+        /* Prevent accidental text selection on UI */
+        -webkit-user-select: none;
+        user-select: none;
+      }
+
+      /* Allow selection on specific data areas */
+      .select-text {
+        -webkit-user-select: text;
+        user-select: text;
+      }
+      
+      /* Custom Scrollbar for SCADA feel */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #475569; 
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #64748b; 
+      }
+
+      /* Glass Panel Utility */
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      /* Performance Optimization: Content Visibility */
+      /* Use only for off-screen heavy content */
+      .content-visibility-auto {
+        content-visibility: auto;
+        contain-intrinsic-size: 1px 400px; /* Estimate chart height */
+      }
+
+      /* Leaflet Custom Overrides */
+      .leaflet-container {
+        background: #0f172a !important;
+        font-family: 'Inter', sans-serif !important;
+      }
+      .leaflet-popup-content-wrapper {
+        background: rgba(15, 23, 42, 0.95) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(51, 65, 85, 0.5);
+        border-radius: 12px !important;
+        color: white !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+      }
+      .leaflet-popup-tip {
+        background: rgba(15, 23, 42, 0.95) !important;
+      }
+      
+      /* Text selection color */
+      ::selection {
+        background-color: rgba(var(--color-primary-rgb), 0.3);
+        color: white;
+      }
+
+      /* VisualTank Animations */
+      @keyframes bubble {
+          0% { transform: translateY(0) scale(1); opacity: 0; }
+          50% { opacity: 0.5; }
+          100% { transform: translateY(-40px) scale(1.5); opacity: 0; }
+      }
+      .bubble {
+          position: absolute;
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 50%;
+          animation: bubble 3s infinite ease-in;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "recharts": "https://aistudiocdn.com/recharts@^3.5.1",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "leaflet": "https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
+    "html2canvas": "https://esm.sh/html2canvas@1.4.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-slate-100 dark:bg-[#0b1121] text-slate-800 dark:text-slate-200 antialiased overflow-hidden selection:bg-teal-500/30">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

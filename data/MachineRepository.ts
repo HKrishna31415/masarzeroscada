@@ -53,8 +53,7 @@ const TO_SAR_RATES: Record<string, number> = {
 };
 
 // CUTOFF DATE - Uses actual system date (UTC for consistency)
-// MODIFIED: Extended to 2026-12-31 to ensure simulated future data is visible in totals
-export const TODAY_CUTOFF = '2026-12-31';
+export const TODAY_CUTOFF = new Date().toISOString().split('T')[0];
 
 // --- Helper Functions ---
 

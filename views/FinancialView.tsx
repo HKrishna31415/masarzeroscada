@@ -82,13 +82,25 @@ export const FinancialView: React.FC<FinancialViewProps> = ({ history, fleet, cu
 
     const VAT_RATE = isScenarioMode ? Math.max(0, BASE_VAT_RATE + (scenarioParams.vatMod / 100)) : BASE_VAT_RATE;
     const isSasco = clientName.toLowerCase().includes('sasco');
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const historyUpToToday = useMemo(() => history.filter(h => h.date <= todayStr), [history, todayStr]);
     
     useEffect(() => {
-        if (history.length > 0) {
+        if (historyUpToToday.length > 0) {
+            setStartDate(historyUpToToday[0].date);
+            setEndDate(historyUpToToday[historyUpToToday.length - 1].date);
+        } else if (history.length > 0) {
             setStartDate(history[0].date);
             setEndDate(history[history.length - 1].date);
         }
-    }, [history]);
+    }, [history, historyUpToToday]);
+
+    useEffect(() => {
+        if (endDate && endDate > todayStr) {
+            setEndDate(todayStr);
+        }
+    }, [endDate, todayStr]);
 
     const rates: Record<string, number> = { 'SAR': 1, 'USD': 0.266, 'CNY': 1.91, 'BHD': 0.1, 'KRW': 365 };
 
@@ -122,9 +134,9 @@ export const FinancialView: React.FC<FinancialViewProps> = ({ history, fleet, cu
 
     // --- Data Processing ---
     const filteredHistory = useMemo(() => {
-        if (!startDate || !endDate) return history;
-        return history.filter(h => h.date >= startDate && h.date <= endDate);
-    }, [history, startDate, endDate]);
+        if (!startDate || !endDate) return historyUpToToday;
+        return historyUpToToday.filter(h => h.date >= startDate && h.date <= endDate);
+    }, [historyUpToToday, startDate, endDate]);
 
     const ledgerData = useMemo(() => {
         return filteredHistory.map(h => {
@@ -163,7 +175,7 @@ export const FinancialView: React.FC<FinancialViewProps> = ({ history, fleet, cu
         const totalProf = ledgerData.reduce((acc, curr) => acc + curr.netProfit, 0);
         let totalVol = ledgerData.reduce((acc, curr) => acc + curr.volume, 0);
 
-        if (history.length > 0 && filteredHistory.length === history.length && fleet.length > 0) {
+        if (historyUpToToday.length > 0 && filteredHistory.length === historyUpToToday.length && fleet.length > 0) {
              const fleetTotal = fleet.reduce((acc, curr) => acc + curr.totalRecoveredAmount, 0);
              totalVol = fleetTotal;
         }
@@ -171,7 +183,7 @@ export const FinancialView: React.FC<FinancialViewProps> = ({ history, fleet, cu
         const totalExp = totalVat + totalElec;
 
         return { totalRevenue: totalRev, totalExpenses: totalExp, totalProfit: totalProf, totalVolume: totalVol, totalVat, totalElec };
-    }, [ledgerData, fleet, history.length, filteredHistory.length]);
+    }, [ledgerData, fleet, historyUpToToday.length, filteredHistory.length]);
 
     // Breakeven Logic (Sasco)
     const breakevenMetrics = useMemo(() => {

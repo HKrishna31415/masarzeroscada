@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { VRU } from '../types';
 import { MapPin, AlertTriangle, Layers, X, Search, Gauge, Globe, Zap, LocateFixed, Plus, Minus, RotateCcw, ExternalLink, List, ChevronDown, CloudRain, Sun } from 'lucide-react';
 import * as L from 'leaflet';
@@ -23,6 +23,7 @@ export const MapsView: React.FC<MapsViewProps> = ({ fleet, onSelectMachine, them
     const [selectedVRUId, setSelectedVRUId] = useState<string | null>(null);
     const [popupVru, setPopupVru] = useState<VRU | null>(null);
     const [popupPos, setPopupPos] = useState<{x: number, y: number} | null>(null);
+    const [popupLayout, setPopupLayout] = useState<{ x: number; y: number; placement: 'above' | 'below' } | null>(null);
     const [showOnlyAlarms, setShowOnlyAlarms] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -37,6 +38,12 @@ export const MapsView: React.FC<MapsViewProps> = ({ fleet, onSelectMachine, them
     const tileLayerRef = useRef<L.TileLayer | null>(null);
     const weatherLayerGroupRef = useRef<L.LayerGroup | null>(null);
     const resizeObserverRef = useRef<ResizeObserver | null>(null);
+    
+    // Popup refs - using state to trigger re-render on mount
+    const [popupNode, setPopupNode] = useState<HTMLDivElement | null>(null);
+    const popupRef = useCallback((node: HTMLDivElement | null) => {
+        setPopupNode(node);
+    }, []);
 
     useEffect(() => {
         const handler = setTimeout(() => { setDebouncedSearch(searchTerm); }, 300);
@@ -85,7 +92,7 @@ export const MapsView: React.FC<MapsViewProps> = ({ fleet, onSelectMachine, them
             zoom: 6, 
             minZoom: 3, 
             maxZoom: 18, 
-            renderer: L.canvas() // Canvas renderer for better perf with many markers
+            // renderer: L.canvas() - Removed to fix icon rendering issues
         });
         mapRef.current = map;
         weatherLayerGroupRef.current = L.layerGroup().addTo(map);
@@ -187,37 +194,65 @@ export const MapsView: React.FC<MapsViewProps> = ({ fleet, onSelectMachine, them
         filteredFleet.forEach(vru => {
             const isSelected = selectedVRUId === vru.id;
             const isAlert = hasActiveAlert(vru);
-            let colorClass = 'bg-slate-500';
-            let glowClass = '';
-            let ringClass = isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900' : '';
             
-            // Prioritize status 'Offline' visual over Alerts to keep dead units gray
+            // Explicit color mapping for reliability
+            let bgColor = '#64748b'; // default slate-500
+            let glowColor = '';
+            
             if (vru.status === 'Offline') { 
-                colorClass = 'bg-slate-500'; 
+                bgColor = '#64748b'; // slate-500
             } 
-            else if (isAlert) { colorClass = 'bg-rose-500'; glowClass = 'animate-ping opacity-75'; } 
-            else if (vru.status === 'Running') { colorClass = 'bg-emerald-500'; } 
-            else if (vru.status === 'Maintenance') { colorClass = 'bg-amber-500'; } 
-            else if (vru.status === 'Pending_Install') { colorClass = 'bg-blue-400'; }
+            else if (isAlert) { 
+                bgColor = '#f43f5e'; // rose-500
+                glowColor = '#f43f5e';
+            } 
+            else if (vru.status === 'Running') { 
+                bgColor = '#10b981'; // emerald-500
+            } 
+            else if (vru.status === 'Maintenance') { 
+                bgColor = '#f59e0b'; // amber-500
+            } 
+            else if (vru.status === 'Pending_Install') { 
+                bgColor = '#60a5fa'; // blue-400
+            }
             
-            const iconHtml = `<div class="relative flex items-center justify-center w-full h-full">${(isAlert && vru.status !== 'Offline') ? `<span class="absolute inline-flex h-full w-full rounded-full ${colorClass} ${glowClass}"></span>` : ''}<span class="relative inline-flex rounded-full h-3 w-3 ${colorClass} ${ringClass} shadow-lg border border-slate-900"></span></div>`;
+            // Create a simpler, more robust HTML structure with inline styles
+            const ringStyle = isSelected ? `box-shadow: 0 0 0 2px white, 0 0 0 4px #0f172a;` : '';
+            const glowHtml = (isAlert && vru.status !== 'Offline') ? 
+                `<span class="absolute inline-flex rounded-full opacity-75 animate-ping" style="width:100%;height:100%;background-color:${glowColor};top:0;left:0;"></span>` : '';
+            
+            const iconHtml = `
+                <div class="relative flex items-center justify-center" style="width:24px;height:24px;">
+                    ${glowHtml}
+                    <span class="relative inline-flex rounded-full border border-slate-900 shadow-lg" style="width:12px;height:12px;background-color:${bgColor};${ringStyle}"></span>
+                </div>
+            `;
+            
             const targetZIndex = isSelected ? 1000 : 0;
             
             if (markersRef.current[vru.id]) {
                 const marker = markersRef.current[vru.id];
-                // Only update DOM if visual state changed
                 if (marker._lastIconHtml !== iconHtml) {
-                    const icon = L.divIcon({ className: 'bg-transparent', html: iconHtml, iconSize: [24, 24], iconAnchor: [12, 12] });
+                    const icon = L.divIcon({ 
+                        className: '', // Empty class name to avoid default styles
+                        html: iconHtml, 
+                        iconSize: [24, 24], 
+                        iconAnchor: [12, 12] 
+                    });
                     marker.setIcon(icon);
                     marker._lastIconHtml = iconHtml;
                 }
                 if (marker._lastZIndex !== targetZIndex) { marker.setZIndexOffset(targetZIndex); marker._lastZIndex = targetZIndex; }
                 
-                // Animate position if GPS changes (rare but possible in simulation)
                 const curPos = marker.getLatLng();
                 if (curPos.lat !== vru.latitude || curPos.lng !== vru.longitude) { marker.setLatLng([vru.latitude, vru.longitude]); }
             } else {
-                const icon = L.divIcon({ className: 'bg-transparent', html: iconHtml, iconSize: [24, 24], iconAnchor: [12, 12] });
+                const icon = L.divIcon({ 
+                    className: '', 
+                    html: iconHtml, 
+                    iconSize: [24, 24], 
+                    iconAnchor: [12, 12] 
+                });
                 const marker = L.marker([vru.latitude, vru.longitude], { icon, zIndexOffset: targetZIndex }) as SmartMarker;
                 marker._lastIconHtml = iconHtml;
                 marker._lastZIndex = targetZIndex;
@@ -231,10 +266,81 @@ export const MapsView: React.FC<MapsViewProps> = ({ fleet, onSelectMachine, them
     // Popup Positioning Update
     useEffect(() => {
         if (popupVru && mapRef.current) {
+            setPopupLayout(null); // Reset layout to prevent jump
             const pt = mapRef.current.latLngToContainerPoint([popupVru.latitude, popupVru.longitude]);
             setPopupPos({ x: pt.x, y: pt.y });
         }
     }, [popupVru]);
+
+    useLayoutEffect(() => {
+        if (!popupPos || !mapContainerRef.current || !popupNode) {
+            setPopupLayout(null);
+            return;
+        }
+        
+        const containerRect = mapContainerRef.current.getBoundingClientRect();
+        const popupRect = popupNode.getBoundingClientRect();
+        
+        // Safety check - if popup hasn't rendered dimensions yet, wait
+        if (popupRect.width === 0 || popupRect.height === 0) return;
+
+        const PADDING = 12;
+        const GAP = 16; 
+        const MARKER_OFFSET = 12;
+
+        // 1. Clamp X (Horizontal)
+        // Ensure center of popup (popupPos.x) is within [PADDING + w/2, Width - PADDING - w/2]
+        const halfWidth = popupRect.width / 2;
+        const minX = PADDING + halfWidth;
+        const maxX = containerRect.width - PADDING - halfWidth;
+        const clampedX = Math.min(maxX, Math.max(minX, popupPos.x));
+
+        // 2. Calculate Vertical Position Candidates
+        // 'above': sits above marker
+        const topAbove = popupPos.y - MARKER_OFFSET - GAP - popupRect.height;
+        // 'below': sits below marker
+        const topBelow = popupPos.y + MARKER_OFFSET + GAP;
+
+        // 3. Check bounds for candidates
+        const fitsAbove = topAbove >= PADDING;
+        const fitsBelow = (topBelow + popupRect.height) <= (containerRect.height - PADDING);
+
+        let placement: 'above' | 'below' = 'above';
+        let top = topAbove;
+
+        if (fitsAbove) {
+            // Default preference
+            placement = 'above';
+            top = topAbove;
+        } else if (fitsBelow) {
+            // If above doesn't fit but below does, swap
+            placement = 'below';
+            top = topBelow;
+        } else {
+            // Neither fits perfectly. Choose the one with MORE visibility.
+            // Or simply clamp the one that is "closer" to being right?
+            // Strategy: Clamp the result to be within [PADDING, ContainerHeight - PADDING - Height]
+            // But which anchor to use?
+            // If we are in the top half of the screen, 'below' usually has more room.
+            // If we are in the bottom half, 'above' usually has more room.
+            
+            if (popupPos.y < containerRect.height / 2) {
+                placement = 'below';
+                top = topBelow;
+            } else {
+                placement = 'above';
+                top = topAbove;
+            }
+        }
+
+        // 4. Final Hard Clamp for Y
+        // Ensure the popup is strictly inside the container vertically
+        const maxTop = containerRect.height - PADDING - popupRect.height;
+        const minTop = PADDING;
+        top = Math.max(minTop, Math.min(maxTop, top));
+
+        setPopupLayout({ x: clampedX, y: top, placement });
+    }, [popupPos, popupVru, popupNode]);
 
     const handleUnitSelect = (vru: VRU) => {
         setSelectedVRUId(vru.id);
@@ -318,8 +424,15 @@ export const MapsView: React.FC<MapsViewProps> = ({ fleet, onSelectMachine, them
                     <button onClick={() => setShowWeatherOverlay(!showWeatherOverlay)} className={`w-10 h-10 bg-white/90 dark:bg-[#1e293b]/90 backdrop-blur border rounded-xl flex items-center justify-center transition-all shadow-lg ${showWeatherOverlay ? 'border-amber-500 text-amber-500 bg-amber-500/10' : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:text-amber-500'}`}><Sun size={20} /></button>
                 </div>
                 {popupVru && popupPos && (
-                    <div className="absolute z-[1001] transform -translate-x-1/2 -translate-y-full mb-4 pointer-events-none" style={{ left: popupPos.x, top: popupPos.y }}>
-                        <div className="pointer-events-auto bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-scada-accent/30 w-72 overflow-hidden animate-in zoom-in-95 fade-in duration-200 ring-1 ring-slate-900/5 dark:ring-white/10">
+                    <div
+                        className={`absolute z-[1001] pointer-events-none transform -translate-x-1/2`}
+                        style={{ 
+                            left: popupLayout?.x ?? popupPos.x, 
+                            top: popupLayout?.y ?? popupPos.y,
+                            visibility: popupLayout ? 'visible' : 'hidden'
+                        }}
+                    >
+                        <div ref={popupRef} className="pointer-events-auto bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-scada-accent/30 w-72 overflow-hidden animate-in zoom-in-95 fade-in duration-200 ring-1 ring-slate-900/5 dark:ring-white/10">
                             <div className="p-4 bg-gradient-to-r from-slate-100 to-transparent dark:from-scada-accent/10 dark:to-transparent border-b border-slate-200 dark:border-white/5 flex justify-between items-start">
                                 <div>
                                     <div className="flex items-center gap-2"><h3 className="font-bold text-slate-900 dark:text-white text-sm">{popupVru.name}</h3><div className={`w-2 h-2 rounded-full ${popupVru.status === 'Running' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : popupVru.status === 'Stopped' || popupVru.status === 'Offline' ? 'bg-slate-500' : 'bg-amber-500'}`}></div></div>
@@ -334,8 +447,17 @@ export const MapsView: React.FC<MapsViewProps> = ({ fleet, onSelectMachine, them
                             </div>
                             <div className="p-2 pt-0"><button onClick={() => onSelectMachine(popupVru.id)} className="w-full py-2 bg-slate-100 dark:bg-white/5 hover:bg-scada-accent hover:border-scada-accent hover:text-white border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 group">{t('accessTelemetry', lang)} <ExternalLink size={12} className="group-hover:translate-x-0.5 transition-transform" /></button></div>
                         </div>
-                        <div className="absolute left-1/2 top-full h-4 w-px bg-gradient-to-b from-scada-accent/50 to-transparent"></div>
-                        <div className="absolute left-1/2 top-full -translate-x-1/2 -mt-px w-2 h-2 bg-white dark:bg-[#0f172a] rotate-45 border-r border-b border-slate-200 dark:border-scada-accent/30"></div>
+                        {popupLayout?.placement === 'below' ? (
+                            <>
+                                <div className="absolute left-1/2 bottom-full h-4 w-px bg-gradient-to-t from-scada-accent/50 to-transparent"></div>
+                                <div className="absolute left-1/2 bottom-full -translate-x-1/2 mt-px w-2 h-2 bg-white dark:bg-[#0f172a] rotate-45 border-l border-t border-slate-200 dark:border-scada-accent/30"></div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="absolute left-1/2 top-full h-4 w-px bg-gradient-to-b from-scada-accent/50 to-transparent"></div>
+                                <div className="absolute left-1/2 top-full -translate-x-1/2 -mt-px w-2 h-2 bg-white dark:bg-[#0f172a] rotate-45 border-r border-b border-slate-200 dark:border-scada-accent/30"></div>
+                            </>
+                        )}
                     </div>
                 )}
                 <div className="absolute bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[1000] bg-white/90 dark:bg-[#0f172a]/80 backdrop-blur border border-slate-200 dark:border-slate-700 rounded-full px-6 py-2 flex gap-4 md:gap-8 shadow-2xl pointer-events-auto w-max max-w-[90%] overflow-x-auto">

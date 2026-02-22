@@ -5,8 +5,11 @@ import { AlertTriangle, CheckCircle, Info, Filter, ArrowUpRight, Wrench, X, Clip
 import { VRU, Alert } from '../types';
 import { t } from '../utils/i18n';
 import { VisualRelay } from '../components/wizards/VisualRelay';
+import { VisualMCB } from '../components/wizards/VisualMCB';
 import { VisualOilPump } from '../components/wizards/VisualOilPump';
 import { VisualEvaporator } from '../components/wizards/VisualEvaporator';
+import { VisualOWSProbe } from '../components/wizards/VisualOWSProbe';
+import { WizardNav } from '../components/wizards/WizardNav';
 
 interface AlertsViewProps {
     fleet: VRU[];
@@ -63,7 +66,11 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ fleet, onSelectMachine, 
     const getAlertContext = (msg: string) => {
         const m = msg.toLowerCase();
         if (m.includes('oil pump') && m.includes('overload')) return 'oil_pump_overload';
+        if (m.includes('oil pump') && (m.includes('failure') || m.includes('replacement'))) return 'oil_pump_failure';
+        if (m.includes('air pump') && m.includes('overload')) return 'air_pump_overload';
         if (m.includes('evaporator') && m.includes('overload')) return 'evaporator_overload';
+        if (m.includes('offline') || m.includes('signal lost')) return 'network_offline';
+        if (m.includes('sensor') && (m.includes('fault') || m.includes('rewiring'))) return 'sensor_fault';
         return 'generic';
     };
 
@@ -105,6 +112,191 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ fleet, onSelectMachine, 
     const renderRemediationContent = () => {
         if (!selectedAlert) return null;
 
+        if (alertType === 'network_offline') {
+            return (
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between px-4 mb-4">
+                        {[1, 2, 3].map(s => (
+                            <div key={s} className={`flex flex-col items-center gap-1 ${wizardStep >= s-1 ? 'text-scada-accent' : 'text-slate-600'}`}>
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border ${wizardStep >= s-1 ? 'border-scada-accent bg-scada-accent/10' : 'border-slate-600'}`}>{s}</div>
+                            </div>
+                        ))}
+                    </div>
+                    {wizardStep === 0 && (
+                        <div className="animate-in slide-in-from-right duration-300 text-center">
+                            <div className="bg-slate-50 dark:bg-scada-900/50 border border-slate-200 dark:border-scada-700 rounded-xl p-6">
+                                <Wifi size={32} className="text-slate-500 mx-auto mb-4" />
+                                <h4 className="text-lg font-bold text-slate-800 dark:text-white">Check Connectivity</h4>
+                                <p className="text-sm text-slate-500 mb-6">Inspect the 4G Router / Modem. Ensure power is on and SIM card is seated.</p>
+                                <WizardNav onNext={() => setWizardStep(1)} nextLabel="Proceed" />
+                            </div>
+                        </div>
+                    )}
+                    {wizardStep === 1 && (
+                        <div className="animate-in slide-in-from-right duration-300">
+                            <div className="mb-4 text-center">
+                                <h4 className="font-bold text-slate-800 dark:text-white">Power Cycle Machine</h4>
+                                <p className="text-xs text-slate-500">Reset MCB to power cycle machine and router.</p>
+                            </div>
+                            <div className="flex justify-center gap-4 bg-slate-100 dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <VisualMCB label="Main Breaker" code="Q1" status={taskCompleted ? "NORMAL" : "TRIPPED"} isTarget={true} onReset={() => { setTaskCompleted(true); setTimeout(() => setWizardStep(2), 1000); }} />
+                            </div>
+                            <WizardNav onBack={() => setWizardStep(0)} onSkip={() => setWizardStep(2)} showSkip={true} />
+                        </div>
+                    )}
+                    {wizardStep === 2 && (
+                        <div className="animate-in slide-in-from-right duration-300">
+                            {renderEvidenceStep()}
+                            <WizardNav onBack={() => setWizardStep(1)} />
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (alertType === 'oil_pump_failure') {
+            return (
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between px-4 mb-4">
+                        {[1, 2, 3].map(s => (
+                            <div key={s} className={`flex flex-col items-center gap-1 ${wizardStep >= s-1 ? 'text-scada-accent' : 'text-slate-600'}`}>
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border ${wizardStep >= s-1 ? 'border-scada-accent bg-scada-accent/10' : 'border-slate-600'}`}>{s}</div>
+                            </div>
+                        ))}
+                    </div>
+                    {wizardStep === 0 && (
+                        <div className="animate-in slide-in-from-right duration-300 text-center">
+                            <div className="bg-slate-50 dark:bg-scada-900/50 border border-slate-200 dark:border-scada-700 rounded-xl p-6">
+                                <Unlock size={32} className="text-slate-500 mx-auto mb-4" />
+                                <h4 className="text-lg font-bold text-slate-800 dark:text-white">Access & Safety</h4>
+                                <p className="text-sm text-slate-500 mb-6">Open cabinet. Ensure Lockout/Tagout procedures are followed.</p>
+                                <WizardNav onNext={() => setWizardStep(1)} nextLabel="Proceed" />
+                            </div>
+                        </div>
+                    )}
+                    {wizardStep === 1 && (
+                        <div className="animate-in slide-in-from-right duration-300">
+                            <div className="mb-4 text-center">
+                                <h4 className="font-bold text-slate-800 dark:text-white">Reset Overload Relay</h4>
+                                <p className="text-xs text-slate-500">Reset the Oil Pump Overload Relay [KM1].</p>
+                            </div>
+                            <div className="flex justify-center gap-4 bg-slate-100 dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <VisualMCB label="Main Breaker" code="Q1" status="NORMAL" isTarget={false} onReset={() => {}} />
+                                <VisualRelay label="Oil Pump Relay" code="KM1" status={taskCompleted ? "NORMAL" : "TRIPPED"} isTarget={true} onReset={() => { setTaskCompleted(true); setTimeout(() => setWizardStep(2), 1000); }} />
+                                <VisualRelay label="Control Power" code="F2" status="NORMAL" isTarget={false} onReset={() => {}} />
+                            </div>
+                            <WizardNav onBack={() => setWizardStep(0)} onSkip={() => setWizardStep(2)} showSkip={true} />
+                        </div>
+                    )}
+                    {wizardStep === 2 && (
+                        <div className="animate-in slide-in-from-right duration-300">
+                             {renderEvidenceStep()}
+                             <WizardNav onBack={() => setWizardStep(1)} />
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (alertType === 'sensor_fault') {
+            return (
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between px-4 mb-4">
+                        {[1, 2, 3].map(s => (
+                            <div key={s} className={`flex flex-col items-center gap-1 ${wizardStep >= s-1 ? 'text-scada-accent' : 'text-slate-600'}`}>
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border ${wizardStep >= s-1 ? 'border-scada-accent bg-scada-accent/10' : 'border-slate-600'}`}>{s}</div>
+                            </div>
+                        ))}
+                    </div>
+                    {wizardStep === 0 && (
+                        <div className="animate-in slide-in-from-right duration-300 text-center">
+                            <div className="bg-slate-50 dark:bg-scada-900/50 border border-slate-200 dark:border-scada-700 rounded-xl p-6">
+                                <Unlock size={32} className="text-slate-500 mx-auto mb-4" />
+                                <h4 className="text-lg font-bold text-slate-800 dark:text-white">Access OWS</h4>
+                                <p className="text-sm text-slate-500 mb-6">Open the Oil-Water Separator control box.</p>
+                                <WizardNav onNext={() => setWizardStep(1)} nextLabel="Proceed" />
+                            </div>
+                        </div>
+                    )}
+                    {wizardStep === 1 && (
+                        <div className="animate-in slide-in-from-right duration-300 text-center">
+                            <div className="mb-4 text-center">
+                                <h4 className="font-bold text-slate-800 dark:text-white">Replace & Rewire</h4>
+                                <p className="text-xs text-slate-500">Unscrew bolts, remove old sensor, install new one, and connect wires.</p>
+                            </div>
+                            <VisualOWSProbe onComplete={() => setWizardStep(2)} />
+                            <WizardNav 
+                                onBack={() => setWizardStep(0)} 
+                                onSkip={() => setWizardStep(2)} 
+                                showSkip={true}
+                                skipLabel="Skip Interactive Step"
+                            />
+                        </div>
+                    )}
+                    {wizardStep === 2 && (
+                        <div className="animate-in slide-in-from-right duration-300">
+                             {renderEvidenceStep()}
+                             <WizardNav onBack={() => setWizardStep(1)} />
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (alertType === 'air_pump_overload') {
+            return (
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between px-4 mb-4">
+                        {[1, 2, 3, 4].map(s => (
+                            <div key={s} className={`flex flex-col items-center gap-1 ${wizardStep >= s-1 ? 'text-scada-accent' : 'text-slate-600'}`}>
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border ${wizardStep >= s-1 ? 'border-scada-accent bg-scada-accent/10' : 'border-slate-600'}`}>{s}</div>
+                            </div>
+                        ))}
+                    </div>
+                    {wizardStep === 0 && (
+                        <div className="animate-in slide-in-from-right duration-300 text-center">
+                            <div className="bg-slate-50 dark:bg-scada-900/50 border border-slate-200 dark:border-scada-700 rounded-xl p-6">
+                                <Unlock size={32} className="text-slate-500 mx-auto mb-4" />
+                                <h4 className="text-lg font-bold text-slate-800 dark:text-white">Access & Safety</h4>
+                                <p className="text-sm text-slate-500 mb-6">Open cabinet. Ensure Lockout/Tagout procedures are followed.</p>
+                                <WizardNav onNext={() => setWizardStep(1)} nextLabel="Proceed" />
+                            </div>
+                        </div>
+                    )}
+                    {wizardStep === 1 && (
+                        <div className="animate-in slide-in-from-right duration-300">
+                            <div className="mb-4 text-center">
+                                <h4 className="font-bold text-slate-800 dark:text-white">Electrical Reset</h4>
+                                <p className="text-xs text-slate-500">First, attempt to reset the Air Pump Overload Relay.</p>
+                            </div>
+                            <div className="flex justify-center gap-4 bg-slate-100 dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <VisualMCB label="Main Breaker" code="Q1" status="NORMAL" isTarget={false} onReset={() => {}} />
+                                <VisualRelay label="Overload Relay" code="KM3" status={taskCompleted ? "NORMAL" : "TRIPPED"} isTarget={true} onReset={() => { setTaskCompleted(true); setTimeout(() => setWizardStep(2), 1000); }} />
+                                <VisualRelay label="Control Power" code="F2" status="NORMAL" isTarget={false} onReset={() => {}} />
+                            </div>
+                            <WizardNav onBack={() => setWizardStep(0)} onSkip={() => setWizardStep(2)} showSkip={true} />
+                        </div>
+                    )}
+                    {wizardStep === 2 && (
+                        <div className="animate-in slide-in-from-right duration-300">
+                            <div className="mb-4 text-center">
+                                <h4 className="font-bold text-slate-800 dark:text-white">Mechanical Service</h4>
+                                <p className="text-xs text-slate-500">If reset failed or tripped again: Check for blockage and spin impeller.</p>
+                            </div>
+                            <VisualOilPump onComplete={() => setWizardStep(3)} />
+                            <WizardNav onBack={() => setWizardStep(1)} onSkip={() => setWizardStep(3)} showSkip={true} />
+                        </div>
+                    )}
+                    {wizardStep === 3 && (
+                        <div className="animate-in slide-in-from-right duration-300">
+                             {renderEvidenceStep()}
+                             <WizardNav onBack={() => setWizardStep(2)} />
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         if (alertType === 'oil_pump_overload') {
             return (
                 <div className="space-y-6">
@@ -121,7 +313,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ fleet, onSelectMachine, 
                                 <Unlock size={32} className="text-slate-500 mx-auto mb-4" />
                                 <h4 className="text-lg font-bold text-slate-800 dark:text-white">Access & Safety</h4>
                                 <p className="text-sm text-slate-500 mb-6">Open cabinet. Ensure Lockout/Tagout procedures are followed.</p>
-                                <button onClick={() => setWizardStep(1)} className="px-6 py-2 bg-scada-accent text-white font-bold rounded-lg hover:bg-sky-400 transition-colors">Proceed</button>
+                                <WizardNav onNext={() => setWizardStep(1)} nextLabel="Proceed" />
                             </div>
                         </div>
                     )}
@@ -132,6 +324,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ fleet, onSelectMachine, 
                                 <p className="text-xs text-slate-500">Unscrew, clean, and spin the impeller manually.</p>
                             </div>
                             <VisualOilPump onComplete={() => setWizardStep(2)} />
+                            <WizardNav onBack={() => setWizardStep(0)} onSkip={() => setWizardStep(2)} showSkip={true} />
                         </div>
                     )}
                     {wizardStep === 2 && (
@@ -145,9 +338,15 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ fleet, onSelectMachine, 
                                 <VisualRelay label="Overload Relay" code="KM3" status={taskCompleted ? "NORMAL" : "TRIPPED"} isTarget={true} onReset={() => { setTaskCompleted(true); setTimeout(() => setWizardStep(3), 1000); }} />
                                 <VisualRelay label="Control Power" code="F2" status="NORMAL" isTarget={false} onReset={() => {}} />
                             </div>
+                            <WizardNav onBack={() => setWizardStep(1)} onSkip={() => setWizardStep(3)} showSkip={true} />
                         </div>
                     )}
-                    {wizardStep === 3 && renderEvidenceStep()}
+                    {wizardStep === 3 && (
+                        <div className="animate-in slide-in-from-right duration-300">
+                             {renderEvidenceStep()}
+                             <WizardNav onBack={() => setWizardStep(2)} />
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -168,7 +367,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ fleet, onSelectMachine, 
                                 <Unlock size={32} className="text-slate-500 mx-auto mb-4" />
                                 <h4 className="text-lg font-bold text-slate-800 dark:text-white">Access & Safety</h4>
                                 <p className="text-sm text-slate-500 mb-6">Shut down unit. Follow standard LOTO procedures before accessing the evaporator housing.</p>
-                                <button onClick={() => setWizardStep(1)} className="px-6 py-2 bg-scada-accent text-white font-bold rounded-lg hover:bg-sky-400 transition-colors">Proceed</button>
+                                <WizardNav onNext={() => setWizardStep(1)} nextLabel="Proceed" />
                             </div>
                         </div>
                     )}
@@ -179,6 +378,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ fleet, onSelectMachine, 
                                 <p className="text-xs text-slate-500">Clear any ice buildup and verify fan spins freely.</p>
                             </div>
                             <VisualEvaporator onComplete={() => setWizardStep(2)} />
+                            <WizardNav onBack={() => setWizardStep(0)} onSkip={() => setWizardStep(2)} showSkip={true} />
                         </div>
                     )}
                     {wizardStep === 2 && (
@@ -188,13 +388,19 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ fleet, onSelectMachine, 
                                 <p className="text-xs text-slate-500">Reset the Evaporator Overload Relay [KM2].</p>
                             </div>
                             <div className="flex justify-center gap-4 bg-slate-100 dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
-                                <VisualRelay label="Main Breaker" code="Q1" status="NORMAL" isTarget={false} onReset={() => {}} />
+                                <VisualMCB label="Main Breaker" code="Q1" status="NORMAL" isTarget={false} onReset={() => {}} />
                                 <VisualRelay label="Evap Relay" code="KM2" status={taskCompleted ? "NORMAL" : "TRIPPED"} isTarget={true} onReset={() => { setTaskCompleted(true); setTimeout(() => setWizardStep(3), 1000); }} />
                                 <VisualRelay label="Control Power" code="F2" status="NORMAL" isTarget={false} onReset={() => {}} />
                             </div>
+                            <WizardNav onBack={() => setWizardStep(1)} onSkip={() => setWizardStep(3)} showSkip={true} />
                         </div>
                     )}
-                    {wizardStep === 3 && renderEvidenceStep()}
+                    {wizardStep === 3 && (
+                        <div className="animate-in slide-in-from-right duration-300">
+                             {renderEvidenceStep()}
+                             <WizardNav onBack={() => setWizardStep(2)} />
+                        </div>
+                    )}
                 </div>
             );
         }

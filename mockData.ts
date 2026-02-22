@@ -5,12 +5,12 @@ import { VRU, Alert, MaintenanceTask, InventoryItem } from './types';
 const generateAlertsForUnit = (u: VRU): Alert[] => {
     const alerts: Alert[] = [];
     
-    // Correction: Evaporator Overload is on Airport 2 (VRU-A02)
+    // Correction: Air Pump Overload is on Airport 2 (VRU-A02)
     if (u.id === 'VRU-A02') {
         alerts.push({
-            id: 'ALT-A02-EVAP',
+            id: 'ALT-A02-AIRPUMP',
             severity: 'Critical',
-            message: 'Evaporator overload',
+            message: 'Air Pump Overload',
             timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 mins ago
             acknowledged: false,
             machineId: u.id,
@@ -25,6 +25,32 @@ const generateAlertsForUnit = (u: VRU): Alert[] => {
             severity: 'Warning',
             message: 'Unit Offline - Signal Lost',
             timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(), // 3 hours ago
+            acknowledged: false,
+            machineId: u.id,
+            machineName: u.name
+        });
+    }
+
+    // King Abdullah Road: Oil Pump Broken
+    if (u.id === 'VRU-KRA') {
+        alerts.push({
+            id: 'ALT-KRA-PUMP',
+            severity: 'Critical',
+            message: 'Oil Pump Failure - Replacement Required',
+            timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
+            acknowledged: false,
+            machineId: u.id,
+            machineName: u.name
+        });
+    }
+
+    // King Faisal Road: Oil Water Separator Sensor Broken
+    if (u.id === 'VRU-KFR') {
+        alerts.push({
+            id: 'ALT-KFR-SENSOR',
+            severity: 'Warning',
+            message: 'OWS Sensor Fault - Replacement & Rewiring Needed',
+            timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
             acknowledged: false,
             machineId: u.id,
             machineName: u.name

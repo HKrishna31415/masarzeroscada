@@ -31,6 +31,19 @@ const generateAlertsForUnit = (u: VRU): Alert[] => {
         });
     }
 
+    // Zaidy is Offline
+    if (u.id === 'VRU-ZDY') {
+        alerts.push({
+            id: 'ALT-ZDY-OFF',
+            severity: 'Warning',
+            message: 'Unit Offline - Signal Lost',
+            timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(), // 10 mins ago
+            acknowledged: false,
+            machineId: u.id,
+            machineName: u.name
+        });
+    }
+
     // King Abdullah Road: Oil Pump Broken
     if (u.id === 'VRU-KRA') {
         alerts.push({
@@ -227,22 +240,22 @@ export const generateFleet = (): VRU[] => {
             id: 'VRU-ZDY',
             name: 'Zaidy',
             owner: 'Sasco',
-            status: 'Running',
+            status: 'Offline',
             country: 'KSA',
             city: 'Makkah',
             region: 'Western',
             latitude: 21.392700,
             longitude: 39.733300,
-            recoveryRateLitersPerHour: 31,
-            recoveryRatePercentage: 0.95,
+            recoveryRateLitersPerHour: 0,
+            recoveryRatePercentage: 0,
             totalRecoveredAmount: 0,
             co2ReducedKg: 0,
-            pressurePSI: 13.9,
+            pressurePSI: 0,
             temperatureC: 33,
             revenueSAR: 0,
             lastMaintenanceDate: '2025-01-10',
             nextMaintenanceDate: '2025-04-10',
-            healthScore: 96,
+            healthScore: 0,
             alerts: [],
             stationDetails: { pumps: 10, tanks91: 2, tanks95: 1, trucksPerDay: 3, dailySalesLiters: 42000 }
         },

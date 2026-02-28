@@ -91,3 +91,143 @@ export const HUYNDAI_2025_DATA: Record<string, number[]> = {
     '11': distribute(79, 30),
     '12': distribute(164, 31),
 };
+
+// Additional GECO units based on provided reports
+// A-SENG: November total 1590 L, December total 1262 L
+export const ASENG_2025_DATA: Record<string, number[]> = {
+    '01': distribute(0, 31),
+    '02': distribute(0, 28),
+    '03': distribute(0, 31),
+    '04': distribute(0, 30),
+    '05': distribute(0, 31),
+    '06': distribute(0, 30),
+    '07': distribute(0, 31),
+    '08': distribute(0, 31),
+    '09': distribute(0, 30),
+    '10': distribute(0, 31),
+    '11': distribute(1590, 30),
+    '12': distribute(1262, 31),
+};
+
+// ARIRANG: November total 2097 L
+export const ARIRANG_2025_DATA: Record<string, number[]> = {
+    '01': distribute(0, 31),
+    '02': distribute(0, 28),
+    '03': distribute(0, 31),
+    '04': distribute(0, 30),
+    '05': distribute(0, 31),
+    '06': distribute(0, 30),
+    '07': distribute(0, 31),
+    '08': distribute(0, 31),
+    '09': distribute(0, 30),
+    '10': distribute(0, 31),
+    '11': distribute(2097, 30),
+    '12': distribute(0, 31),
+};
+
+// S-OIL-CLOVER: November total 1442 L
+export const SOILCLOVER_2025_DATA: Record<string, number[]> = {
+    '01': distribute(0, 31),
+    '02': distribute(0, 28),
+    '03': distribute(0, 31),
+    '04': distribute(0, 30),
+    '05': distribute(0, 31),
+    '06': distribute(0, 30),
+    '07': distribute(0, 31),
+    '08': distribute(0, 31),
+    '09': distribute(0, 30),
+    '10': distribute(0, 31),
+    '11': distribute(1442, 30),
+    '12': distribute(0, 31),
+};
+
+// IRONMAN: October total 1948 L
+export const IRONMAN_2025_DATA: Record<string, number[]> = {
+    '01': distribute(0, 31),
+    '02': distribute(0, 28),
+    '03': distribute(0, 31),
+    '04': distribute(0, 30),
+    '05': distribute(0, 31),
+    '06': distribute(0, 30),
+    '07': distribute(0, 31),
+    '08': distribute(0, 31),
+    '09': distribute(0, 30),
+    '10': distribute(1948, 31),
+    '11': distribute(0, 30),
+    '12': distribute(0, 31),
+};
+
+export const BAEKJE_2025_DATA: Record<string, number[]> = {
+    '01': distribute(0, 31),
+    '02': distribute(0, 28),
+    '03': distribute(0, 31),
+    '04': distribute(0, 30),
+    '05': distribute(0, 31),
+    '06': distribute(0, 30),
+    '07': distribute(0, 31),
+    '08': distribute(0, 31),
+    '09': distribute(0, 30),
+    '10': distribute(1209, 31),
+    '11': distribute(0, 30),
+    '12': distribute(0, 31),
+};
+
+export const MYONGPOOM_2025_DATA: Record<string, number[]> = {
+    '01': distribute(0, 31),
+    '02': distribute(0, 28),
+    '03': distribute(0, 31),
+    '04': distribute(0, 30),
+    '05': distribute(0, 31),
+    '06': distribute(0, 30),
+    '07': distribute(0, 31),
+    '08': distribute(0, 31),
+    '09': distribute(0, 30),
+    '10': distribute(1339, 31),
+    '11': distribute(0, 30),
+    '12': distribute(0, 31),
+};
+
+export const NEWTOWN_2025_DATA: Record<string, number[]> = {
+    '01': distribute(0, 31),
+    '02': distribute(0, 28),
+    '03': distribute(0, 31),
+    '04': distribute(0, 30),
+    '05': distribute(0, 31),
+    '06': distribute(0, 30),
+    '07': distribute(0, 31),
+    '08': distribute(0, 31),
+    '09': distribute(0, 30),
+    '10': distribute(2241, 31),
+    '11': distribute(0, 30),
+    '12': distribute(0, 31),
+};
+
+export const BETMAN01_2025_DATA: Record<string, number[]> = {
+    '01': distribute(0, 31),
+    '02': distribute(0, 28),
+    '03': distribute(0, 31),
+    '04': distribute(0, 30),
+    '05': distribute(0, 31),
+    '06': distribute(0, 30),
+    '07': distribute(0, 31),
+    '08': distribute(0, 31),
+    '09': distribute(0, 30),
+    '10': distribute(1220, 31),
+    '11': distribute(0, 30),
+    '12': distribute(0, 31),
+};
+
+export const BETMAN02_2025_DATA: Record<string, number[]> = {
+    '01': distribute(0, 31),
+    '02': distribute(0, 28),
+    '03': distribute(0, 31),
+    '04': distribute(0, 30),
+    '05': distribute(0, 31),
+    '06': distribute(0, 30),
+    '07': distribute(0, 31),
+    '08': distribute(0, 31),
+    '09': distribute(0, 30),
+    '10': distribute(1361, 31),
+    '11': distribute(0, 30),
+    '12': distribute(0, 31),
+};

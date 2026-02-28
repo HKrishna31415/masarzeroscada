@@ -22,7 +22,7 @@ import { ZAIDY_2025_DATA, ZAIDY_2026_DATA } from './ZaidyData';
 import { ALMUZANI_2025_DATA, ALMUZANI_2026_DATA } from './AlMuzaniData';
 import { AIRPORT2_2025_DATA, AIRPORT2_2026_DATA } from './Airport2Data';
 import { LAYAN_2025_DATA, LAYAN_2026_DATA } from './LayanData';
-import { SEOIL_2025_DATA, GECO452_2025_DATA, HUYNDAI_2025_DATA } from './GecoSpecificData';
+import { SEOIL_2025_DATA, GECO452_2025_DATA, HUYNDAI_2025_DATA, ASENG_2025_DATA, ARIRANG_2025_DATA, SOILCLOVER_2025_DATA, IRONMAN_2025_DATA, BAEKJE_2025_DATA, MYONGPOOM_2025_DATA, NEWTOWN_2025_DATA, BETMAN01_2025_DATA, BETMAN02_2025_DATA } from './GecoSpecificData';
 
 // In-memory "Database" simulating file storage
 // FORCE CLEAR CACHE ON RELOAD TO FIX STALE PRICING & DOUBLE COUNTING
@@ -402,6 +402,33 @@ export const getMachineData = (id: string, baseTemp: number = 25): MachineExtend
     } else if (id === 'HUYNDAIPULAS001') {
         daily = buildFromStaticData(effectiveConfig, 15, { '2025': HUYNDAI_2025_DATA });
         hourly = generateHourlyData(baseTemp, 22); // Active flow
+    } else if (id === 'GECO-ASENG') {
+        daily = buildFromStaticData(effectiveConfig, 13, { '2025': ASENG_2025_DATA });
+        hourly = generateHourlyData(baseTemp, 16); // Active flow
+    } else if (id === 'GECO-ARIRANG') {
+        daily = buildFromStaticData(effectiveConfig, 13, { '2025': ARIRANG_2025_DATA });
+        hourly = generateHourlyData(baseTemp, 18); // Active flow
+    } else if (id === 'GECO-SOIL-CLOVER') {
+        daily = buildFromStaticData(effectiveConfig, 12, { '2025': SOILCLOVER_2025_DATA });
+        hourly = generateHourlyData(baseTemp, 14); // Active flow
+    } else if (id === 'GECO-IRONMAN') {
+        daily = buildFromStaticData(effectiveConfig, 11, { '2025': IRONMAN_2025_DATA });
+        hourly = generateHourlyData(baseTemp, 12); // Active flow
+    } else if (id === 'GECO-BAEK-JE') {
+        daily = buildFromStaticData(effectiveConfig, 12, { '2025': BAEKJE_2025_DATA });
+        hourly = generateHourlyData(baseTemp, 14);
+    } else if (id === 'GECO-MYONG-POOM') {
+        daily = buildFromStaticData(effectiveConfig, 12, { '2025': MYONGPOOM_2025_DATA });
+        hourly = generateHourlyData(baseTemp, 15);
+    } else if (id === 'GECO-NEW-TOWN') {
+        daily = buildFromStaticData(effectiveConfig, 12, { '2025': NEWTOWN_2025_DATA });
+        hourly = generateHourlyData(baseTemp, 16);
+    } else if (id === 'GECO-BETMAN01') {
+        daily = buildFromStaticData(effectiveConfig, 12, { '2025': BETMAN01_2025_DATA });
+        hourly = generateHourlyData(baseTemp, 14);
+    } else if (id === 'GECO-BETMAN-02') {
+        daily = buildFromStaticData(effectiveConfig, 12, { '2025': BETMAN02_2025_DATA });
+        hourly = generateHourlyData(baseTemp, 14);
     }
     // ---------------------------
     else {

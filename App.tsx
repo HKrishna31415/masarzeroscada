@@ -173,6 +173,13 @@ const App: React.FC = () => {
     }, []);
 
     // --- LOGIN HANDLER ---
+    const handleLogout = useCallback(() => {
+        setIsAuthenticated(false);
+        // Optional: clear any session specific local storage if needed
+        // localStorage.removeItem('masarzero_token');
+        addToast('Session terminated. You have been logged out.', 'info');
+    }, [addToast]);
+
     const handleLoginSuccess = (clientId: string) => {
         setIsAuthenticated(true);
         
@@ -290,7 +297,7 @@ const App: React.FC = () => {
     }
 
     return (
-        <Layout appState={appState} setAppState={setAppState} fleet={fleet}>
+        <Layout appState={appState} setAppState={setAppState} fleet={fleet} onLogout={handleLogout}>
             <Suspense fallback={<LoadingFallback />}>
                 {renderView()}
             </Suspense>

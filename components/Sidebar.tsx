@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { 
   LayoutDashboard, Map as MapIcon, Server, DollarSign, 
   Leaf, Wrench, Activity, AlertCircle, Settings, 
-  FileText, Calendar, X, ArrowRightLeft
+  FileText, Calendar, X, ArrowRightLeft, LogOut
 } from 'lucide-react';
 import { AppState, ViewState } from '../types';
 import { t } from '../utils/i18n';
@@ -11,9 +11,10 @@ import { t } from '../utils/i18n';
 interface SidebarProps {
     appState: AppState;
     setAppState: React.Dispatch<React.SetStateAction<AppState>>;
+    onLogout?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = React.memo(({ appState, setAppState }) => {
+export const Sidebar: React.FC<SidebarProps> = React.memo(({ appState, setAppState, onLogout }) => {
     const lang = appState.language;
     const client = appState.client;
     
@@ -31,6 +32,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({ appState, setAppSta
         { id: 'report-builder', label: t('reports', lang), icon: <FileText size={20} /> },
         { id: 'settings', label: t('settings', lang), icon: <Settings size={20} /> },
     ], [lang]);
+
+    const handleLogoutClick = () => {
+        if (onLogout) onLogout();
+    };
 
     return (
         <aside 
@@ -84,6 +89,20 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({ appState, setAppSta
                     ))}
                 </ul>
             </nav>
+
+            {/* Logout Action */}
+            <div className="px-3 pb-2 border-b border-slate-200 dark:border-scada-700">
+                <button
+                    onClick={handleLogoutClick}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 group"
+                    title={!appState.isSidebarOpen ? "Logout" : ""}
+                >
+                    <span className="flex-shrink-0 transition-transform group-hover:scale-110">
+                        <LogOut size={20} />
+                    </span>
+                    {appState.isSidebarOpen && <span className="font-bold truncate">Logout Session</span>}
+                </button>
+            </div>
             
             {/* Footer Area (MasarZero Logo) */}
             <div className="p-6 border-t border-slate-200 dark:border-scada-700 flex-shrink-0 bg-slate-50 dark:bg-scada-800/50">

@@ -11,9 +11,10 @@ interface LayoutProps {
   setAppState: React.Dispatch<React.SetStateAction<AppState>>;
   children: React.ReactNode;
   fleet?: VRU[]; // Added fleet prop for global search access
+  onLogout?: () => void; // Added logout handler
 }
 
-export const Layout: React.FC<LayoutProps> = ({ appState, setAppState, children, fleet = [] }) => {
+export const Layout: React.FC<LayoutProps> = ({ appState, setAppState, children, fleet = [], onLogout }) => {
   const [isCmdOpen, setIsCmdOpen] = useState(false);
   
   // Handle Theme Switching
@@ -90,12 +91,12 @@ export const Layout: React.FC<LayoutProps> = ({ appState, setAppState, children,
 
       {/* Desktop Sidebar - Hidden on Mobile */}
       <div className="hidden md:block h-full z-[100]">
-        <Sidebar appState={appState} setAppState={setAppState} />
+        <Sidebar appState={appState} setAppState={setAppState} onLogout={onLogout} />
       </div>
 
       {/* Mobile Sidebar - Slide in (Controlled by isSidebarOpen) */}
       <div className={`md:hidden fixed inset-y-0 left-0 z-[3001] w-64 transform transition-transform duration-300 ease-in-out ${appState.isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-         <Sidebar appState={appState} setAppState={setAppState} />
+         <Sidebar appState={appState} setAppState={setAppState} onLogout={onLogout} />
       </div>
 
       <div className="flex-1 flex flex-col min-w-0 transition-colors duration-300 relative z-0">

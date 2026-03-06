@@ -405,13 +405,13 @@ export const getMachineData = (id: string, baseTemp: number = 25): MachineExtend
     // --- GECO SPECIFIC UNITS ---
     else if (id === 'SEOIL-01') {
         daily = buildFromStaticData(effectiveConfig, 12, { '2025': SEOIL_2025_DATA });
-        hourly = generateHourlyData(baseTemp, 18); // Active flow
+        hourly = generateHourlyData(baseTemp, 0, true); 
     } else if (id === 'GECO452') {
         daily = buildFromStaticData(effectiveConfig, 14, { '2025': GECO452_2025_DATA });
-        hourly = generateHourlyData(baseTemp, 15); // Active flow
+        hourly = generateHourlyData(baseTemp, 0, true); 
     } else if (id === 'HUYNDAIPULAS001') {
         daily = buildFromStaticData(effectiveConfig, 15, { '2025': HUYNDAI_2025_DATA });
-        hourly = generateHourlyData(baseTemp, 22); // Active flow
+        hourly = generateHourlyData(baseTemp, 0, true); 
     } else if (id === 'GECO-ISTIKLAL') {
         daily = buildFromStaticData(effectiveConfig, 25, { '2025': ISTIKLAL_DATA });
         hourly = generateHourlyData(baseTemp, 0, true);
@@ -429,31 +429,37 @@ export const getMachineData = (id: string, baseTemp: number = 25): MachineExtend
         hourly = generateHourlyData(baseTemp, 0, true);
     } else if (id === 'GECO-ASENG') {
         daily = buildFromStaticData(effectiveConfig, 13, { '2025': ASENG_2025_DATA });
-        hourly = generateHourlyData(baseTemp, 16); // Active flow
+        hourly = generateHourlyData(baseTemp, 0, true); 
     } else if (id === 'GECO-ARIRANG') {
         daily = buildFromStaticData(effectiveConfig, 13, { '2025': ARIRANG_2025_DATA });
-        hourly = generateHourlyData(baseTemp, 18); // Active flow
+        hourly = generateHourlyData(baseTemp, 0, true); 
     } else if (id === 'GECO-SOIL-CLOVER') {
         daily = buildFromStaticData(effectiveConfig, 12, { '2025': SOILCLOVER_2025_DATA });
-        hourly = generateHourlyData(baseTemp, 14); // Active flow
+        hourly = generateHourlyData(baseTemp, 0, true); 
     } else if (id === 'GECO-IRONMAN') {
         daily = buildFromStaticData(effectiveConfig, 11, { '2025': IRONMAN_2025_DATA });
-        hourly = generateHourlyData(baseTemp, 12); // Active flow
+        hourly = generateHourlyData(baseTemp, 0, true); 
     } else if (id === 'GECO-BAEK-JE') {
         daily = buildFromStaticData(effectiveConfig, 12, { '2025': BAEKJE_2025_DATA });
-        hourly = generateHourlyData(baseTemp, 14);
+        hourly = generateHourlyData(baseTemp, 0, true);
     } else if (id === 'GECO-MYONG-POOM') {
         daily = buildFromStaticData(effectiveConfig, 12, { '2025': MYONGPOOM_2025_DATA });
-        hourly = generateHourlyData(baseTemp, 15);
+        hourly = generateHourlyData(baseTemp, 0, true);
     } else if (id === 'GECO-NEW-TOWN') {
         daily = buildFromStaticData(effectiveConfig, 12, { '2025': NEWTOWN_2025_DATA });
-        hourly = generateHourlyData(baseTemp, 16);
+        hourly = generateHourlyData(baseTemp, 0, true);
     } else if (id === 'GECO-BETMAN01') {
         daily = buildFromStaticData(effectiveConfig, 12, { '2025': BETMAN01_2025_DATA });
-        hourly = generateHourlyData(baseTemp, 14);
+        hourly = generateHourlyData(baseTemp, 0, true);
     } else if (id === 'GECO-BETMAN-02') {
         daily = buildFromStaticData(effectiveConfig, 12, { '2025': BETMAN02_2025_DATA });
-        hourly = generateHourlyData(baseTemp, 14);
+        hourly = generateHourlyData(baseTemp, 0, true);
+    } else if (id === 'GECO-SLO-01') {
+        daily = generatePendingData(effectiveConfig, baseTemp);
+        hourly = generateHourlyData(baseTemp, 0, true);
+    } else if (id === 'GECO-BAKU-01') {
+        daily = generatePendingData(effectiveConfig, baseTemp);
+        hourly = generateHourlyData(baseTemp, 0, true);
     }
     // ---------------------------
     else {

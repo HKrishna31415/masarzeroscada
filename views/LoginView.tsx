@@ -10,8 +10,8 @@ interface LoginViewProps {
 export const LoginView: React.FC<LoginViewProps> = ({ onLogin }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [bootStatus, setBootStatus] = useState('');
-    const [email, setEmail] = useState('admin@sasco.com.sa');
-    const [password, setPassword] = useState('12345678');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [mounted, setMounted] = useState(false);
     
